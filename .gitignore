@@ -1,0 +1,3 @@
+/.python-version
+*.lock
+.python-version.dvc
