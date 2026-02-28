@@ -6,9 +6,26 @@ import polars as pl
 import boto3
 
 session = boto3.Session(profile_name="strats")
-s3 = session.client("s3")
-#creds = pl.CredentialProviderAWS(profile_name='strats', _storage_options_has_endpoint_url=True)
-#pl.Config.set_default_credential_provider(creds)
+storage_options = {
+    'key': session.get_credentials().access_key,
+    'secret': session.get_credentials().secret_key,
+    'endpoint_url': 'https://s3.fr-par.scw.cloud', # TODO this is fixed for now
+}
+
+def select_no_nulls(df: pl.DataFrame, max_null_ratio=0.2) -> pl.DataFrame:
+    """
+    eg. ```df.pipe(select_no_nulls)```
+    """
+    valid = df.select(pl.all().is_null().sum() < max_null_ratio).to_dict()
+    
+    selection = []
+    for (name, valid) in valid.items():
+        if valid.item():
+            selection.append(name)
+
+    return df.select(selection)
+
+
 
 def download_zip(url: str, csv_filename_in_zip: str) -> io.StringIO:
     # 1. Download ZIP
@@ -26,22 +43,4 @@ def download_zip(url: str, csv_filename_in_zip: str) -> io.StringIO:
 parser = argparse.ArgumentParser()
 parser.add_argument("-i", "--input", help="input file", type=str, nargs='+')
 parser.add_argument("-o", "--output", help="output file", type=str)
-args = parser.parse_args()
-
-def write_df(df, key: str, bucket: str = 'default'):
-    with io.StringIO() as csv_buffer:
-        if isinstance(df, pl.DataFrame):
-            df.write_csv(csv_buffer)
-        else:
-            df.to_csv(csv_buffer, index=False)
-
-        response = s3.put_object(
-            Bucket=bucket, Key=key, Body=csv_buffer.getvalue()
-        )
-
-        status = response.get("ResponseMetadata", {}).get("HTTPStatusCode")
-
-        if status == 200:
-            print(f"Successful S3 put_object response. Status - {status}")
-        else:
-            print(f"Unsuccessful S3 put_object response. Status - {status}")
+kw = parser.parse_args()

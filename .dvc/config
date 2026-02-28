@@ -1,4 +1,5 @@
 [core]
-    remote = infomaniak
-['remote "infomaniak"']
-    url = https://s3.swiss-backup04.infomaniak.com/default
+    remote = bucket
+['remote "bucket"']
+    url = s3://lance/
+    profile = strats

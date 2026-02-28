@@ -1,5 +1,5 @@
 stages:
   extract:
-    cmd: python -m extract.eu_macro --output https://s3.swiss-backup04.infomaniak.com/default/EUFX.csv
+    cmd: python -m extract.eu_macro --output data/EUFX.csv
     outs:
-      - https://s3.swiss-backup04.infomaniak.com/default/EUFX.csv
+      - data/EUFX.csv

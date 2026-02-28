@@ -1,3 +1,6 @@
 /.python-version
-*.lock
+uv.lock
 .python-version.dvc
+data/*.csv
+*.csv
+/test.txt
