@@ -3,14 +3,6 @@ import urllib.request
 import zipfile
 import io
 import polars as pl
-import boto3
-
-session = boto3.Session(profile_name="strats")
-storage_options = {
-    'key': session.get_credentials().access_key,
-    'secret': session.get_credentials().secret_key,
-    'endpoint_url': 'https://s3.fr-par.scw.cloud', # TODO this is fixed for now
-}
 
 def select_no_nulls(df: pl.DataFrame, max_null_ratio=0.2) -> pl.DataFrame:
     """
@@ -24,8 +16,6 @@ def select_no_nulls(df: pl.DataFrame, max_null_ratio=0.2) -> pl.DataFrame:
             selection.append(name)
 
     return df.select(selection)
-
-
 
 def download_zip(url: str, csv_filename_in_zip: str) -> io.StringIO:
     # 1. Download ZIP

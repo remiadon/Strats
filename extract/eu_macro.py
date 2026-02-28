@@ -2,7 +2,7 @@ import pandas as pd
 # FIXME cannot write using polars because scaleway says permission error.
 # FIXME pl.scan_csv cannot be done due to HEAD operations not allowed by scaleway
 
-from . import kw, storage_options
+from . import kw
 
 fxrates = pd.read_csv(
     'https://www.ecb.europa.eu/stats/eurofxref/eurofxref-hist.zip?6b751cd0b6f02158a105213db574b6b0', 
