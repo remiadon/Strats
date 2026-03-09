@@ -1,5 +1,13 @@
 stages:
   extract:
-    cmd: python -m extract.eu_macro --output data/EUFX.csv
-    outs:
-      - data/EUFX.csv
+    foreach:
+      - eufx
+      - eu_uncertainty
+    do:
+      cmd: 
+        - python -m extract.${item} --output data/${item}.csv
+        - python -c "import pandas as pd; print(pd.read_csv('data/${item}.csv').describe(percentiles=[]).to_json('metrics/${item}.json', orient='index', indent=2))"
+      outs:
+        - data/${item}.csv
+      metrics:
+        - metrics/${item}.json

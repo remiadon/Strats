@@ -7,5 +7,7 @@ requires-python = ">=3.9"
 dependencies = [
     "dvc>=3.66.1",
     "dvc-s3>=3.3.0",
+    "fastexcel>=0.16.0",
+    "pandas>=2.3.3",
     "polars>=1.36.1",
 ]

@@ -1,5 +1,5 @@
 /.python-version
 uv.lock
 .python-version.dvc
-data/*.csv
-*.csv
+data/
+metrics/
