@@ -1,7 +1,5 @@
 import polars as pl
 from functools import reduce
-import time
-## monthly data
 
 from . import kw, dump
 
@@ -25,6 +23,10 @@ esg = pl.read_excel(
     pl.col.Date.str.to_date('%Y %b', strict=False),
     pl.exclude('Date').name.suffix('_esg_policy_uncertainty'),
 ).drop_nulls(subset='Date')
+
+# TODO :  add https://www.matteoiacoviello.com/gpr_files/data_gpr_export.xls
+# eg. `df.select(a=pl.struct(pl.col('var_name', 'var_label').drop_nulls())).get_column('a')` to get column name mappings
+# updated every month, but march is not even here and we are on the 9th
 
 df = reduce(lambda x, y: x.join(y, on='Date', how='full', validate='1:1', coalesce=True), [eupu, esg]).sort('Date')
 df = df.filter(pl.col('Date').dt.to_string() >= '2008-01-01')
