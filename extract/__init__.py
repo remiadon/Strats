@@ -30,14 +30,16 @@ def download_zip(url: str, csv_filename_in_zip: str) -> io.StringIO:
     # 3. Return StringIO
     return io.StringIO(content)
 
-def dump(df: pl.DataFrame, output_path: str):  # TODO : DQ checks should go there, with patito or dataframely
+def dump(df: pl.DataFrame, output_path: str, key=None, **kwargs):  # TODO : DQ checks should go there, with patito or dataframely
     import warnings
     if output_path is None:
         return
-    if set(df.schema.values()) != {pl.Date, pl.Float64}:
+    if set(df.schema.values()) != {pl.Date, pl.Float64} and not key:
         warnings.warn("DataFrame schema does not match expected values. Expected all columns to be either Date or Float64.")
-    df = df.select(pl.col(pl.Date, pl.Float64))
-    df.write_csv(output_path)
+    if key:
+        df = df.unique(subset=key).sort(by=key, **kwargs)
+    df.write_parquet(output_path)
+    df.head(50).write_csv(output_path.replace('.parquet', '.csv'))
 
 
 parser = argparse.ArgumentParser()

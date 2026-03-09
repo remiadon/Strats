@@ -1,13 +1,14 @@
 stages:
   extract:
     foreach:
-      - eufx
+      - eu_fx
       - eu_uncertainty
+      - eu_shorts
     do:
       cmd: 
-        - python -m extract.${item} --output data/${item}.csv
-        - python -c "import pandas as pd; print(pd.read_csv('data/${item}.csv').describe(percentiles=[]).to_json('metrics/${item}.json', orient='index', indent=2))"
+        - python -m extract.${item} --output data/${item}.parquet
+        - python -c "import pandas as pd; print(pd.read_parquet('data/${item}.parquet').describe(percentiles=[]).to_json('metrics/${item}.json', orient='index', indent=2))"
       outs:
-        - data/${item}.csv
+        - data/${item}.parquet
       metrics:
         - metrics/${item}.json
