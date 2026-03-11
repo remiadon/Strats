@@ -17,14 +17,14 @@ def select_no_nulls(df: pl.DataFrame, max_null_ratio=0.2) -> pl.DataFrame:
 
     return df.select(selection)
 
-def download_zip(url: str, csv_filename_in_zip: str) -> io.StringIO:
+def download_zip(url: str, csv_filename_in_zip: str = None) -> io.StringIO:
     # 1. Download ZIP
     with urllib.request.urlopen(url) as response:
         zip_data = response.read()
 
     # 2. Extract CSV from ZIP
     with zipfile.ZipFile(io.BytesIO(zip_data)) as zf:
-        with zf.open(csv_filename_in_zip) as csv_file:
+        with zf.open(csv_filename_in_zip or zf.namelist()[0]) as csv_file:
             content = csv_file.read().decode('utf-8')
 
     # 3. Return StringIO

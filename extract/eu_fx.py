@@ -1,19 +1,15 @@
-import pandas as pd
 import polars as pl
-# FIXME cannot write using polars because scaleway says permission error.
-# FIXME pl.scan_csv cannot be done due to HEAD operations not allowed by scaleway
+import itertools
+from . import kw, dump, download_zip
 
-from . import kw, dump
-
-fxrates = pd.read_csv(
-    'https://www.ecb.europa.eu/stats/eurofxref/eurofxref-hist.zip?6b751cd0b6f02158a105213db574b6b0', 
-    decimal='.', 
+fxrates = pl.read_csv(
+    download_zip('https://www.ecb.europa.eu/stats/eurofxref/eurofxref-hist.zip?6b751cd0b6f02158a105213db574b6b0'),
+    decimal_comma=False,
     encoding='utf-8',
-    compression='zip'
-    )
-valid_cols = [col for col in fxrates.columns if len(col) == 3]
+    infer_schema_length=10_000,
+)
 
-nulls = fxrates[valid_cols].isnull().sum() / len(fxrates)
-valid_cols = nulls[nulls < .2].index
-fxrates = fxrates[['Date'] + valid_cols.to_list()]
-dump(pl.from_pandas(fxrates), kw.output, key='Date')
+valid_curr = itertools.compress( # filter out currency columns with more than 20% nulls
+    *fxrates.select(pl.col('^[A-Z]{3}$').is_null().sum().truediv(pl.len()) < .2).transpose(include_header=True)
+)
+dump(fxrates.select('Date', *valid_curr), kw.output, key='Date')
