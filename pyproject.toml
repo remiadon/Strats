@@ -17,3 +17,6 @@ dependencies = [
 dev = [
     "ipython",
 ]
+
+[tool.setuptools.packages.find]
+where = ["."]

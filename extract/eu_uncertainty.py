@@ -1,7 +1,6 @@
 import polars as pl
 from functools import reduce
-
-from . import kw, dump
+from common.io import dump
 
 #countries = ['France', 'UK', 'Germany', 'Italy', 'Spain', 'Russia', 'Netherlands', 'Sweden', 'Poland', 'Belgium']
 g7 = ['US', 'UK', 'France', 'Germany', 'Italy', 'Japan', 'Canada']
@@ -30,4 +29,4 @@ esg = pl.read_excel(
 
 df = reduce(lambda x, y: x.join(y, on='date', how='full', validate='1:1', coalesce=True), [eupu, esg]).sort('date')
 df = df.filter(pl.col('date').dt.to_string() >= '2008-01-01')
-dump(df, kw.output)
+dump(df)

@@ -1,6 +1,5 @@
 import polars as pl
-
-from . import kw, dump
+from common.io import dump
 
 shorts = pl.read_csv(
     'https://www.data.gouv.fr/fr/datasets/r/c2539d1c-8531-4937-9cba-3bd8e9786cc5',
@@ -20,4 +19,4 @@ shorts = shorts.rename(columns)
 #shorts = shorts.pivot('Holder', index=['ISIN', 'start_date', 'end_date'], aggregate_function='sum', values='Ratio')
  # TODO : add rolling gini index ?
 shorts = shorts.group_by('ISIN', 'date').agg(short_pos_sum=pl.col.Ratio.sum(), short_pos_median=pl.col.Ratio.median(), short_pos_max=pl.col.Ratio.max())
-dump(shorts, kw.output, key=['ISIN', 'date'], descending=False)
+dump(shorts, key=['ISIN', 'date'], descending=False)
