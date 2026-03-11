@@ -4,4 +4,3 @@ uv.lock
 data/
 **/__pycache__/
 metrics/
-dvc.lock

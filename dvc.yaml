@@ -8,7 +8,7 @@ stages:
     do:
       cmd: 
         - python -m extract.${item} --output data/${item}.parquet
-        - python -c "import pandas as pd; print(pd.read_parquet('data/${item}.parquet').describe(percentiles=[]).to_json('metrics/${item}.json', orient='index', indent=2))"
+        - python -c "import pandas as pd; pd.read_parquet('data/${item}.parquet').describe(percentiles=[]).to_json('metrics/${item}.json', orient='index', indent=2)"
       outs:
         - data/${item}.parquet
       metrics:
@@ -22,7 +22,10 @@ stages:
     do:
       cmd:
         - python -c "import polars as pl; import polars.selectors as cs; pl.scan_parquet('data/${item}.parquet').with_columns(cs.numeric().diff()).sink_parquet('data/${item}_diff.parquet')"
+        - python -c "import pandas as pd; pd.read_parquet('data/${item}_diff.parquet').describe(percentiles=[]).to_json('metrics/${item}_diff.json', orient='index', indent=2)"
       outs:
         - data/${item}_diff.parquet
+      metrics:
+        - metrics/${item}_diff.json
       deps:
         - data/${item}.parquet
