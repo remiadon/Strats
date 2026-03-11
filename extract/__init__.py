@@ -30,7 +30,7 @@ def download_zip(url: str, csv_filename_in_zip: str) -> io.StringIO:
     # 3. Return StringIO
     return io.StringIO(content)
 
-def dump(df: pl.DataFrame, output_path: str, key=None, **kwargs):  # TODO : DQ checks should go there, with patito or dataframely
+def dump(df: pl.DataFrame, output_path: str, key=['date'], **kwargs):  # TODO : DQ checks should go there, with patito or dataframely
     import warnings
     if output_path is None:
         return

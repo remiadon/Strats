@@ -16,4 +16,4 @@ valid_cols = [col for col in fxrates.columns if len(col) == 3]
 nulls = fxrates[valid_cols].isnull().sum() / len(fxrates)
 valid_cols = nulls[nulls < .2].index
 fxrates = fxrates[['Date'] + valid_cols.to_list()]
-dump(pl.from_pandas(fxrates), kw.output)
+dump(pl.from_pandas(fxrates), kw.output, key='Date')

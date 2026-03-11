@@ -3,11 +3,17 @@ name = "strats"
 version = "0.1.0"
 description = "Add your description here"
 readme = "README.md"
-requires-python = ">=3.9"
+requires-python = ">=3.10"
 dependencies = [
     "dvc>=3.66.1",
     "dvc-s3>=3.3.0",
     "fastexcel>=0.16.0",
     "pandas>=2.3.3",
     "polars>=1.36.1",
+    "pyarrow>=23.0.1",
+    "yfinance-pl>=0.7.2.2",
+]
+[project.optional-dependencies]
+dev = [
+    "ipython",
 ]

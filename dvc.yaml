@@ -4,6 +4,7 @@ stages:
       - eu_fx
       - eu_uncertainty
       - eu_shorts
+      - stock_history
     do:
       cmd: 
         - python -m extract.${item} --output data/${item}.parquet
@@ -12,3 +13,16 @@ stages:
         - data/${item}.parquet
       metrics:
         - metrics/${item}.json
+
+  transform@diff:
+    foreach:
+      - eu_fx
+      - eu_uncertainty
+      - stock_history
+    do:
+      cmd:
+        - python -c "import polars as pl; import polars.selectors as cs; pl.scan_parquet('data/${item}.parquet').with_columns(cs.numeric().diff()).sink_parquet('data/${item}_diff.parquet')"
+      outs:
+        - data/${item}_diff.parquet
+      deps:
+        - data/${item}.parquet

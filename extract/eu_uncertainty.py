@@ -12,7 +12,7 @@ eupu = pl.read_excel(
 )
 eupu = eupu.filter(pl.concat_list(pl.exclude('Year', 'Month')).list.drop_nulls().list.len() > 4)
 eupu = eupu.select(
-    pl.date('Year', 'Month', 1).alias('Date'),
+    pl.date('Year', 'Month', 1).alias('date'),
     pl.exclude('Year', 'Month').name.suffix('_policy_uncertainty'),
 )
 esg = pl.read_excel(
@@ -20,14 +20,14 @@ esg = pl.read_excel(
     infer_schema_length=10_000,
     columns=['Date', 'Global_GDP_Weighted', 'Global_Equal_Weighted'] + g7,
 ).select(
-    pl.col.Date.str.to_date('%Y %b', strict=False),
+    pl.col.Date.str.to_date('%Y %b', strict=False).alias('date'),
     pl.exclude('Date').name.suffix('_esg_policy_uncertainty'),
-).drop_nulls(subset='Date')
+).drop_nulls(subset='date')
 
 # TODO :  add https://www.matteoiacoviello.com/gpr_files/data_gpr_export.xls
 # eg. `df.select(a=pl.struct(pl.col('var_name', 'var_label').drop_nulls())).get_column('a')` to get column name mappings
 # updated every month, but march is not even here and we are on the 9th
 
-df = reduce(lambda x, y: x.join(y, on='Date', how='full', validate='1:1', coalesce=True), [eupu, esg]).sort('Date')
-df = df.filter(pl.col('Date').dt.to_string() >= '2008-01-01')
+df = reduce(lambda x, y: x.join(y, on='date', how='full', validate='1:1', coalesce=True), [eupu, esg]).sort('date')
+df = df.filter(pl.col('date').dt.to_string() >= '2008-01-01')
 dump(df, kw.output)
