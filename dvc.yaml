@@ -6,8 +6,14 @@ stages:
         - python -m extract.io --dataset ${key} --corr-threshold 0.9
 
   signatures:  # TODO : play with cadences as defined in params.yaml
-    cmd: python -m transform.signatures --sources stock_history eu_fx -o data/eu_signatures_1w.parquet --period 1w --group-by ticker
-    outs:
-      - data/eu_stock_signatures.parquet
-    metrics:
-      - metrics/eu_stock_signatures.json
+    foreach:
+      - period: 1w
+        sources: stock_history eu_fx
+      - period: 1q
+        sources: stock_history eu_fx eu_uncertainty
+    do:
+      cmd: python -m transform.signatures --sources ${item.sources} -o data/eu_signatures_${item.period}.parquet --period ${item.period} --group-by ticker
+      outs:
+        - data/eu_signatures_${item.period}.parquet
+      metrics:
+        - metrics/eu_signatures_${item.period}.json

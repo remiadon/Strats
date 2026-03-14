@@ -66,7 +66,7 @@ def signature(*exprs: pl.Expr, level: int = 2, index_column: str = None) -> Mapp
 
 
 if __name__ == '__main__':
-    from common.io import dump, get_sources
+    from extract.io import dump, get_sources, get_sources_config
     import polars as pl
     import dvc.api
     import argparse
@@ -80,8 +80,7 @@ if __name__ == '__main__':
     params = dvc.api.params_show()
 
     index = {'date', kw.group_by or []}
-
-    dfs = get_sources(kw.sources)
+    dfs = get_sources(**get_sources_config(kw.sources))
     col_to_source = {col: source for source, df in dfs.items() for col in df.columns}
     df = functools.reduce(
         lambda left, right: left.join(right, on='date', how="full", coalesce=True), 

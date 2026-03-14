@@ -1,3 +1,4 @@
+from typing import Tuple, AnyStr, Optional
 import polars as pl
 import polars.selectors as cs
 import yfinance_pl as yf
@@ -6,20 +7,21 @@ import zipfile
 import io
 import itertools
 import json
+import dvc.api
+
+from .cache import daily_cache
+from . import execute_and_pass
+
+dvc_params = execute_and_pass(dvc.api.params_show)
 
 #rich_df = import_from_gist('b0d32072f234fba73650eb4b1e9c0017', name='rich_df', files_head_member='rich_display_pandas_dataframe.py')
 
-def download_zip(url: str, csv_filename_in_zip: str = None) -> io.StringIO:
-    # 1. Download ZIP
+def dzip(url: str, csv_filename_in_zip: str = None) -> io.StringIO:
     with urllib.request.urlopen(url) as response:
         zip_data = response.read()
-
-    # 2. Extract CSV from ZIP
     with zipfile.ZipFile(io.BytesIO(zip_data)) as zf:
         with zf.open(csv_filename_in_zip or zf.namelist()[0]) as csv_file:
             content = csv_file.read().decode('utf-8')
-
-    # 3. Return StringIO
     return io.StringIO(content)
 
 
@@ -43,39 +45,31 @@ def dump(df: pl.DataFrame, output_path: str, key=['date'], **kwargs):  # TODO : 
         ).to_dicts()[0], f, indent=2)
     df.write_parquet(output_path)
 
-def get_stocks(tickers: list[str]):
+@daily_cache
+def get_stocks(tickers: Tuple[AnyStr]) -> pl.DataFrame:
     return pl.concat([
         yf.Ticker(ticker).history(period='10y', interval='1d').select(pl.col.date.dt.date(), pl.lit(ticker).alias('ticker'), 'close.amount', 'volume') 
         for ticker in tickers
     ]) # TODO mcp server 
 
-def execute_polars(source: str, **kwargs):
-    import dvc.api
+@dvc_params
+@daily_cache
+def execute_polars(source: str, **params):
     from functools import reduce
-    _locals = {'cs': cs, 'pl': pl, 'yf': yf, 'get_stocks': get_stocks, 'reduce': reduce, **kwargs, **dvc.api.params_show()}
+    _locals = {'cs': cs, 'pl': pl, 'yf': yf, 'get_stocks': get_stocks, 'reduce': reduce, **params}
     return eval(source, _locals)
 
-
-def get_sources(names: tuple[str] = None) -> dict[str, pl.DataFrame]:
-    import dvc.api
-    params = dvc.api.params_show()
+@dvc_params
+def get_sources_config(names: Optional[Tuple[AnyStr]] = None, **params):
     if names is None:
-        cands = params['bronze']
-    else:
-        cands = {k: v for k, v in params['bronze'].items() if k in names}
+        return params['bronze']
+    return {k: v for k, v in params['bronze'].items() if k in names}
+
+@daily_cache
+def get_sources(**config) -> dict[str, pl.DataFrame]:
     sources = dict()
-    for name, _map in cands.items():
-        url = _map.get('url', '')
-        if url.endswith('.xlsx'):
-            source = pl.read_excel(url, infer_schema_length=10_000)
-        elif '.zip' in url:
-            source = pl.read_csv(
-                download_zip(url),
-                decimal_comma=False,
-                encoding='utf-8',
-                infer_schema_length=10_000,
-            )
-        sources[name] = execute_polars(_map['polars'], self=source)
+    for name, _map in config.items():
+        sources[name] = execute_polars(_map['polars'], dzip=dzip)
     return sources
 
 if __name__ == '__main__':
@@ -83,6 +77,7 @@ if __name__ == '__main__':
     import dvc.api
     import argparse
     import itertools
+    import re
 
     parser = argparse.ArgumentParser()
     parser.add_argument("-d", "--dataset", help="input file", type=str)
@@ -91,11 +86,8 @@ if __name__ == '__main__':
     kw = parser.parse_args()
     params = dvc.api.params_show()
 
-    # TODO
-    #get_tokens = lambda s: set(re.split(r'\[|\]|,\s', s))
-    #dataset_tokens = get_tokens(params['silver'][dataset]['polars'])
-    #cands = {name: cand for name, cands in params['bronze'].items() if get_token(cand).intersection(dataset_tokens)}
-    sources = get_sources() # FIXME this gets all sources for now
+    dataset_tokens = set(re.split(r'\[|\]|,\s', params['silver'][kw.dataset]['polars']))
+    sources = get_sources(**get_sources_config(tuple(dataset_tokens)))
     df = execute_polars(params['silver'][kw.dataset]['polars'], **sources)
     if kw.corr_threshold is not None:
         corrs = df.select(
