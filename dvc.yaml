@@ -1,25 +1,13 @@
 stages:
   extract:
-    foreach:
-      - eu_fx
-      - eu_uncertainty
-      - eu_shorts
-      - stock_history
+    foreach: ${silver}
     do:
-      cmd: 
-        - python -m extract.${item} --output data/${item}.parquet
-      outs:
-        - data/${item}.parquet
-      metrics:
-        - metrics/${item}.json
+      cmd:
+        - python -m common.io --dataset ${key} --corr-threshold 0.9
 
-  transform:
-    cmd: 
-      - python -m transform.signatures -i data/stock_history.parquet data/eu_fx.parquet -o data/signatures.parquet
-    deps:
-      - data/stock_history.parquet
-      - data/eu_fx.parquet
+  signatures:  # TODO : play with cadences as defined in params.yaml
+    cmd: python -m transform.signatures --sources stock_history eu_fx -o data/eu_signatures_1w.parquet --period 1w --group-by ticker
     outs:
-      - data/signatures.parquet
+      - data/eu_stock_signatures.parquet
     metrics:
-      - metrics/signatures.json
+      - metrics/eu_stock_signatures.json

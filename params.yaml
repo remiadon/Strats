@@ -14,3 +14,32 @@ tickers:
   - AVIO.MI
   - MTX.DE
   #- SHE.DE
+
+
+bronze:
+  eu_uncertainty: 
+    url: https://policyuncertainty.com/media/Europe_Policy_Uncertainty_Data.xlsx
+    polars: self.filter(pl.concat_list(pl.exclude('Year', 'Month')).list.drop_nulls().list.len() > 4).select(pl.date('Year', 'Month', 1).alias('date'), cs.numeric()) # TODO drop Month
+    freq: monthly
+  eu_fx: 
+    url: https://www.ecb.europa.eu/stats/eurofxref/eurofxref-hist.zip?6b751cd0b6f02158a105213db574b6b0
+    freq: daily
+    polars: self.select(pl.col.Date.str.to_date().alias('date'), cs.numeric())
+  #eu_shorts:
+  #  url: https://www.data.gouv.fr/fr/datasets/r/c2539d1c-8531-4937-9cba-3bd8e9786cc5
+  #  polars: 
+  #  freq: event
+  #  read_params:
+  #    seperator: ';'
+  #    try_parse_dates: True
+  stock_history:
+    polars: get_stocks(tickers)
+
+silver:
+  eu_stocks_macro:
+    polars: >- # TODO : try pl.concat or pl.align_frames
+      reduce(lambda a, b: a.join(b, on='date', how='left'), [stock_history, eu_fx, eu_uncertainty])
+
+gold:
+  eu_stocks_macro_signatures:
+    polars.
